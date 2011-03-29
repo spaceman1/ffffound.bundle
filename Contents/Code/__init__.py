@@ -1,22 +1,21 @@
-from PMS import Plugin, Log, DB, Thread, XML, HTTP, JSON, RSS, Utils
-from PMS.MediaXML import MediaContainer, DirectoryItem, PhotoItem
-
 PLUGIN_PREFIX   = "/photos/fffound"
 RSS_FEED        = "http://feeds.feedburner.com/ffffound/everyone"
 
 ####################################################################################################
+
 def Start():
-  Plugin.AddRequestHandler(PLUGIN_PREFIX, HandlePhotosRequest, "FFFFOUND!", "icon-default.png", "art-default.jpg")
-  Plugin.AddViewGroup("ImageStream", viewMode="ImageStream", contentType="items")
-
+	Plugin.AddPrefixHandler(PLUGIN_PREFIX, HandlePhotosRequest, "FFFFOUND!", "icon-default.png", "art-default.jpg")
+	Plugin.AddViewGroup("ImageStream", viewMode="ImageStream", mediaType="items")
+	MediaContainer.art = R("art-default.jpg")
+	MediaContainer.viewGroup = 'ImageStream'
+	
 ####################################################################################################
-def HandlePhotosRequest(pathNouns, count):
-  dir = MediaContainer("art-default.jpg", "ImageStream", "FFFFOUND!")
-  
-  if count == 0:
-    for item in RSS.Parse(RSS_FEED).entries:
-      node = XML.ElementFromString(item.summary, True)
-      img = node.xpath("//img")[0].get('src')
-      dir.AppendItem(PhotoItem(img, item.title, '', img))
+def HandlePhotosRequest():
+	dir = MediaContainer(title1="FFFFOUND!")
+	
+	for item in RSS.FeedFromURL(RSS_FEED).entries:
+		node = HTML.ElementFromString(item.summary)
+		img = node.xpath("//img")[0].get('src')
+		dir.Append(PhotoItem(img, title=item.title, thumb=img))
 
-  return dir.ToXML()
+	return dir
